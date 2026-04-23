@@ -160,14 +160,8 @@ function setupAuthHandlers() {
           password,
         });
 
-        alert('Signup successful! Check your email to confirm.');
+        showConfirmationReceipt(email);
         signupForm.reset();
-
-        // Switch to login
-        if (loginForm) loginForm.style.display = 'flex';
-        if (signupForm) signupForm.style.display = 'none';
-        document.getElementById('loginToggle').classList.add('active');
-        document.getElementById('signupToggle').classList.remove('active');
       } catch (error) {
         alert('Signup failed: ' + error.message);
       }
@@ -244,6 +238,34 @@ function setupDashboardHandlers() {
         showAuthForm();
       }
     });
+  }
+}
+
+// Show Confirmation Receipt
+function showConfirmationReceipt(email) {
+  const receipt = document.getElementById('confirmationReceipt');
+  const emailDisplay = document.getElementById('confirmationEmail');
+  const doneBtn = document.getElementById('confirmationDone');
+
+  if (emailDisplay) emailDisplay.textContent = email;
+
+  if (receipt) {
+    receipt.classList.add('show');
+
+    // Remove after clicking done
+    doneBtn.onclick = () => {
+      receipt.classList.remove('show');
+      // Switch to login
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
+      const loginToggle = document.getElementById('loginToggle');
+      const signupToggle = document.getElementById('signupToggle');
+
+      if (loginForm) loginForm.style.display = 'flex';
+      if (signupForm) signupForm.style.display = 'none';
+      loginToggle.classList.add('active');
+      signupToggle.classList.remove('active');
+    };
   }
 }
 
