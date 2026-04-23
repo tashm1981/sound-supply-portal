@@ -1,10 +1,21 @@
 // Supabase Client Initialization
 const supabaseUrl = 'https://oosjahmlsdierkeetnaq.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vc2phaG1sc2RpZXJrZWV0bmFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MTQ3MzksImV4cCI6MjA5MjQ5MDczOX0.LLb9GYBvgXJlo8q3MHIue0QLeKwo44GJA_v845iMi-M';
-const { createClient } = window.supabase;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+let supabase = null;
 
 let currentUser = null;
+
+// Wait for Supabase to load
+function initSupabase() {
+  if (!window.supabase) {
+    console.warn('Supabase not loaded yet, retrying in 100ms...');
+    setTimeout(initSupabase, 100);
+    return;
+  }
+  const { createClient } = window.supabase;
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('Supabase initialized');
+}
 
 // DOM Elements
 const authContainer = document.getElementById('authContainer');
@@ -17,6 +28,16 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
+  // Initialize Supabase first
+  initSupabase();
+  
+  // Wait a moment for Supabase to be ready
+  if (!supabase) {
+    console.error('Supabase failed to initialize');
+    alert('Error loading authentication service. Please refresh the page.');
+    return;
+  }
+
   // Check if user is already logged in
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
