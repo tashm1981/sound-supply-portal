@@ -7,13 +7,13 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 let currentUser = null;
 
 // DOM Elements
-const authContainer = document.getElementById('auth-container');
-const dashboardContainer = document.getElementById('dashboard-container');
-const loginForm = document.getElementById('login-form');
-const signupForm = document.getElementById('signup-form');
-const toggleSignupLink = document.getElementById('toggle-signup');
-const toggleLoginLink = document.getElementById('toggle-login');
-const logoutBtn = document.getElementById('logout-btn');
+const authContainer = document.getElementById('authContainer');
+const dashboardContainer = document.getElementById('dashboardContainer');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const loginToggle = document.getElementById('loginToggle');
+const signupToggle = document.getElementById('signupToggle');
+const logoutBtn = document.getElementById('logoutBtn');
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -25,21 +25,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Set up form toggle
-  toggleSignupLink.addEventListener('click', (e) => {
+  loginToggle.addEventListener('click', (e) => {
     e.preventDefault();
-    toggleAuthForm();
+    showLoginForm();
   });
 
-  toggleLoginLink.addEventListener('click', (e) => {
+  signupToggle.addEventListener('click', (e) => {
     e.preventDefault();
-    toggleAuthForm();
+    showSignupForm();
   });
 
   // Login handler
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -60,9 +60,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Signup handler
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('signup-email').value;
-    const password = document.getElementById('signup-password').value;
-    const confirmPassword = document.getElementById('signup-confirm-password').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirmPassword = document.getElementById('signupConfirmPassword').value;
 
     if (password !== confirmPassword) {
       alert('Passwords do not match');
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (error) throw error;
 
       alert('Signup successful! Please check your email to confirm your account.');
-      toggleAuthForm();
+      showLoginForm();
       signupForm.reset();
     } catch (error) {
       alert(`Signup failed: ${error.message}`);
@@ -100,35 +100,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Tab switching
-  document.querySelectorAll('.tab-btn').forEach((btn) => {
-    btn.addEventListener('click', () => showTab(btn.dataset.tab));
-  });
+  document.getElementById('overviewTab').addEventListener('click', () => showTab('overview'));
+  document.getElementById('ordersTab').addEventListener('click', () => showTab('orders'));
+  document.getElementById('accountTab').addEventListener('click', () => showTab('account'));
 });
 
-// Toggle between login and signup forms
-function toggleAuthForm() {
-  loginForm.classList.toggle('hidden');
-  signupForm.classList.toggle('hidden');
+// Show login form
+function showLoginForm() {
+  loginForm.style.display = 'flex';
+  signupForm.style.display = 'none';
+  loginToggle.classList.add('active');
+  signupToggle.classList.remove('active');
+}
+
+// Show signup form
+function showSignupForm() {
+  loginForm.style.display = 'none';
+  signupForm.style.display = 'flex';
+  loginToggle.classList.remove('active');
+  signupToggle.classList.add('active');
 }
 
 // Show auth form
 function showAuthForm() {
-  authContainer.classList.remove('hidden');
-  dashboardContainer.classList.add('hidden');
+  authContainer.style.display = 'flex';
+  dashboardContainer.style.display = 'none';
 }
 
 // Show dashboard
 function showDashboard() {
-  authContainer.classList.add('hidden');
-  dashboardContainer.classList.remove('hidden');
+  authContainer.style.display = 'none';
+  dashboardContainer.style.display = 'block';
   loadDashboard();
 }
 
 // Load dashboard data
 async function loadDashboard() {
   const username = currentUser.email.split('@')[0];
-  document.getElementById('user-name').textContent = username;
-  document.getElementById('user-email').textContent = currentUser.email;
+  document.getElementById('userEmail').textContent = currentUser.email;
+  document.getElementById('profileEmail').value = currentUser.email;
 
   // Load overview tab by default
   showTab('overview');
@@ -138,17 +148,17 @@ async function loadDashboard() {
 function showTab(tabName) {
   // Hide all tabs
   document.querySelectorAll('.tab-content').forEach((tab) => {
-    tab.classList.add('hidden');
+    tab.classList.remove('active');
   });
 
   // Deactivate all buttons
-  document.querySelectorAll('.tab-btn').forEach((btn) => {
-    btn.classList.remove('active');
-  });
+  document.getElementById('overviewTab').classList.remove('active');
+  document.getElementById('ordersTab').classList.remove('active');
+  document.getElementById('accountTab').classList.remove('active');
 
   // Show selected tab
-  document.getElementById(`${tabName}-tab`).classList.remove('hidden');
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+  document.getElementById(`${tabName}Content`).classList.add('active');
+  document.getElementById(`${tabName}Tab`).classList.add('active');
 
   // Load tab-specific data
   if (tabName === 'overview') {
@@ -163,17 +173,24 @@ function showTab(tabName) {
 // Load overview tab
 function loadOverviewTab() {
   // Mock stats
-  const stats = {
-    totalOrders: 8,
-    totalSpent: '$1,245.00',
-    pendingOrders: 2,
-    activeDownloads: 3,
-  };
+  const stats = [
+    { label: 'Total Orders', value: '8' },
+    { label: 'Total Spent', value: '$1,245.00' },
+    { label: 'Pending Orders', value: '2' },
+    { label: 'Active Downloads', value: '3' },
+  ];
 
-  document.getElementById('stat-total-orders').textContent = stats.totalOrders;
-  document.getElementById('stat-total-spent').textContent = stats.totalSpent;
-  document.getElementById('stat-pending-orders').textContent = stats.pendingOrders;
-  document.getElementById('stat-active-downloads').textContent = stats.activeDownloads;
+  const statsContainer = document.getElementById('statsContainer');
+  statsContainer.innerHTML = stats
+    .map(
+      (stat) => `
+    <div class="stat-card">
+      <div class="stat-label">${stat.label}</div>
+      <div class="stat-value">${stat.value}</div>
+    </div>
+  `
+    )
+    .join('');
 
   // Mock recent orders
   const recentOrders = [
@@ -182,7 +199,7 @@ function loadOverviewTab() {
     { id: '#SS-003', date: '2025-12-15', amount: '$75.00', status: 'Completed' },
   ];
 
-  const recentOrdersList = document.getElementById('recent-orders-list');
+  const recentOrdersList = document.getElementById('recentOrdersContainer');
   recentOrdersList.innerHTML = recentOrders
     .map(
       (order) => `
@@ -210,17 +227,18 @@ function loadOrdersTab() {
     { id: '#SS-005', date: '2025-12-05', items: 'Bass Synth Pack', amount: '$89.00', status: 'Completed' },
   ];
 
-  const ordersList = document.getElementById('orders-list');
+  const ordersList = document.getElementById('ordersListContainer');
   ordersList.innerHTML = allOrders
     .map(
       (order) => `
-    <div class="order-row">
-      <div class="order-id">${order.id}</div>
-      <div class="order-date">${order.date}</div>
-      <div class="order-items">${order.items}</div>
+    <div class="order-item">
+      <div class="order-info">
+        <div class="order-id">${order.id}</div>
+        <div class="order-date">${order.date}</div>
+      </div>
+      <div style="flex: 1;">${order.items}</div>
       <div class="order-amount">${order.amount}</div>
       <div class="order-status ${order.status.toLowerCase().replace(' ', '-')}">${order.status}</div>
-      <button class="btn-small btn-view">View</button>
     </div>
   `
     )
@@ -229,30 +247,31 @@ function loadOrdersTab() {
 
 // Load account tab
 function loadAccountTab() {
-  const profileForm = document.getElementById('profile-form');
-  const passwordForm = document.getElementById('password-form');
-
   // Profile form handler
-  profileForm.addEventListener('submit', async (e) => {
+  document.getElementById('updateProfileBtn').addEventListener('click', async (e) => {
     e.preventDefault();
-    const displayName = document.getElementById('display-name').value;
-    const phone = document.getElementById('phone').value;
+    const displayName = document.getElementById('profileName').value;
+    const phone = document.getElementById('profilePhone').value;
+    const company = document.getElementById('profileCompany').value;
 
     // Mock update (real implementation would save to Supabase)
     try {
       alert('Profile updated successfully!');
-      profileForm.reset();
     } catch (error) {
       alert(`Update failed: ${error.message}`);
     }
   });
 
-  // Password form handler
-  passwordForm.addEventListener('submit', async (e) => {
+  // Password change handler
+  document.getElementById('changePasswordBtn').addEventListener('click', async (e) => {
     e.preventDefault();
-    const currentPassword = document.getElementById('current-password').value;
-    const newPassword = document.getElementById('new-password').value;
-    const confirmNewPassword = document.getElementById('confirm-new-password').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+    if (!newPassword || !confirmNewPassword) {
+      alert('Please fill in all password fields');
+      return;
+    }
 
     if (newPassword !== confirmNewPassword) {
       alert('New passwords do not match');
@@ -267,14 +286,15 @@ function loadAccountTab() {
       if (error) throw error;
 
       alert('Password changed successfully!');
-      passwordForm.reset();
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmNewPassword').value = '';
     } catch (error) {
       alert(`Password change failed: ${error.message}`);
     }
   });
 
   // Delete account handler
-  document.getElementById('delete-account-btn').addEventListener('click', async () => {
+  document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
     if (
       !confirm(
         'Are you sure you want to delete your account? This action cannot be undone.'
