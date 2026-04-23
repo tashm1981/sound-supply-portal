@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sound Supply Portal | User Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- AUTH CONTAINER -->
+<div id="authContainer">
+  <div class="auth-wrapper">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <i class="fas fa-waveform-lines"></i> Sound<span class="text-gradient">Supply</span>
+      </div>
+      <p>Artist Portal</p>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm" class="auth-form">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" required>
+      </div>
+      
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Sign In</button>
+    </form>
+
+    <!-- SIGNUP FORM -->
+    <form id="signupForm" class="auth-form">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="signupEmail" placeholder="your@email.com" required>
+      </div>
+      
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="Minimum 6 characters" required>
+      </div>
+
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="signupConfirmPassword" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Create Account</button>
+    </form>
+
+    <div class="auth-footer">
+      <p id="togglePrompt">Don't have an account?</p>
+      <div class="auth-toggle">
+        <button type="button" id="loginToggle" class="active">Sign In</button>
+        <button type="button" id="signupToggle">Sign Up</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD CONTAINER -->
+<div id="dashboardContainer">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="dashboard-title">
+      <i class="fas fa-waveform-lines"></i> Sound<span class="text-gradient">Supply</span> Portal
+    </div>
+    <div class="dashboard-user-info">
+      <div class="user-email" id="userEmail">user@email.com</div>
+      <button id="logoutBtn" class="btn-secondary">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="dashboard-sidebar">
+    <ul class="sidebar-nav">
+      <li><button id="overviewTab" class="active">Overview</button></li>
+      <li><button id="ordersTab">Orders</button></li>
+      <li><button id="accountTab">Account</button></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    
+    <!-- OVERVIEW TAB -->
+    <div id="overviewContent" class="tab-content active">
+      <h2 style="font-family: var(--font-primary); font-size: 24px; margin-bottom: 30px;">Dashboard Overview</h2>
+      
+      <div id="statsContainer" class="stats-grid"></div>
+
+      <div class="recent-orders-section">
+        <h3>Recent Orders</h3>
+        <div id="recentOrdersContainer"></div>
+      </div>
+    </div>
+
+    <!-- ORDERS TAB -->
+    <div id="ordersContent" class="tab-content">
+      <h2 style="font-family: var(--font-primary); font-size: 24px; margin-bottom: 30px;">Order History</h2>
+      
+      <div class="orders-section">
+        <div id="ordersListContainer"></div>
+      </div>
+    </div>
+
+    <!-- ACCOUNT TAB -->
+    <div id="accountContent" class="tab-content">
+      <h2 style="font-family: var(--font-primary); font-size: 24px; margin-bottom: 30px;">Account Settings</h2>
+      
+      <div class="account-section">
+        <h3>Profile Information</h3>
+        <form class="account-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="profileEmail" readonly>
+            </div>
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="profileName" placeholder="Your full name">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="profilePhone" placeholder="+1 (555) 123-4567">
+            </div>
+            <div class="form-group">
+              <label>Company</label>
+              <input type="text" id="profileCompany" placeholder="Your company">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="updateProfileBtn" class="btn-success">Save Profile</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="account-section">
+        <h3>Change Password</h3>
+        <form class="account-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="newPassword" placeholder="New password (min 6 chars)">
+            </div>
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <input type="password" id="confirmNewPassword" placeholder="Confirm password">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="changePasswordBtn" class="btn-success">Update Password</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="account-section">
+        <h3>Danger Zone</h3>
+        <div class="account-form">
+          <p style="color: var(--neutral-400); margin-bottom: 20px;">Deleting your account is permanent and cannot be undone. All your data will be lost.</p>
+          <div class="form-actions">
+            <button type="button" id="deleteAccountBtn" class="btn-danger">Delete Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
