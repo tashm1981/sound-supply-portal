@@ -1,58 +1,73 @@
-// Supabase Client Initialization
-const supabaseUrl = 'https://oosjahmlsdierkeetnaq.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vc2phaG1sc2RpZXJrZWV0bmFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MTQ3MzksImV4cCI6MjA5MjQ5MDczOX0.LLb9GYBvgXJlo8q3MHIue0QLeKwo44GJA_v845iMi-M';
+// Supabase REST API (no library needed)
+const SUPABASE_URL = 'https://oosjahmlsdierkeetnaq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vc2phaG1sc2RpZXJrZWV0bmFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MTQ3MzksImV4cCI6MjA5MjQ5MDczOX0.LLb9GYBvgXJlo8q3MHIue0QLeKwo44GJA_v845iMi-M';
 
-let supabase = null;
 let currentUser = null;
+let sessionToken = null;
 
-// Initialize Supabase
-function initSupabase() {
-  if (!window.supabase || !window.supabase.createClient) {
-    console.error('Supabase library not loaded');
-    return false;
+// Supabase Auth API helper
+async function supabaseAuth(endpoint, method = 'POST', body = null) {
+  const url = `${SUPABASE_URL}/auth/v1${endpoint}`;
+  const headers = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON_KEY,
+  };
+  if (sessionToken) {
+    headers['Authorization'] = `Bearer ${sessionToken}`;
   }
+
+  const options = {
+    method,
+    headers,
+  };
+
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
   try {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-    console.log('✓ Supabase initialized');
-    return true;
+    const res = await fetch(url, options);
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error_description || data.message || 'Auth error');
+    }
+
+    return data;
   } catch (err) {
-    console.error('Failed to initialize Supabase:', err);
-    return false;
+    throw err;
   }
 }
 
-// DOM Setup - Hide dashboard by default
+// DOM Setup
 document.addEventListener('DOMContentLoaded', () => {
   const authContainer = document.getElementById('authContainer');
   const dashboardContainer = document.getElementById('dashboardContainer');
-  
-  // Force dashboard hidden on load
+
+  // Hide dashboard by default
   if (dashboardContainer) dashboardContainer.style.display = 'none';
   if (authContainer) authContainer.style.display = 'flex';
-  
-  // Initialize Supabase
-  if (!initSupabase()) {
-    alert('Failed to load authentication. Please refresh.');
-    return;
-  }
 
   setupAuthHandlers();
   setupDashboardHandlers();
   checkExistingSession();
 });
 
-// Check if user already logged in
-async function checkExistingSession() {
-  if (!supabase) return;
-  
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (user) {
-      currentUser = user;
+// Check if user logged in (from localStorage)
+function checkExistingSession() {
+  const token = localStorage.getItem('supabase_token');
+  const user = localStorage.getItem('supabase_user');
+
+  if (token && user) {
+    try {
+      sessionToken = token;
+      currentUser = JSON.parse(user);
       showDashboard();
+    } catch (err) {
+      console.error('Session restore failed:', err);
+      localStorage.removeItem('supabase_token');
+      localStorage.removeItem('supabase_user');
     }
-  } catch (err) {
-    console.error('Session check error:', err);
   }
 }
 
@@ -63,7 +78,7 @@ function setupAuthHandlers() {
   const loginToggle = document.getElementById('loginToggle');
   const signupToggle = document.getElementById('signupToggle');
 
-  // Toggle between forms
+  // Toggle forms
   if (loginToggle) {
     loginToggle.addEventListener('click', (e) => {
       e.preventDefault();
@@ -84,7 +99,7 @@ function setupAuthHandlers() {
     });
   }
 
-  // Login submit
+  // Login handler
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -97,23 +112,26 @@ function setupAuthHandlers() {
       }
 
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const response = await supabaseAuth('/token?grant_type=password', 'POST', {
           email,
           password,
         });
 
-        if (error) throw error;
-        if (data.user) {
-          currentUser = data.user;
-          showDashboard();
-        }
+        sessionToken = response.access_token;
+        currentUser = response.user;
+
+        // Store in localStorage
+        localStorage.setItem('supabase_token', sessionToken);
+        localStorage.setItem('supabase_user', JSON.stringify(currentUser));
+
+        showDashboard();
       } catch (error) {
-        alert('Login error: ' + error.message);
+        alert('Login failed: ' + error.message);
       }
     });
   }
 
-  // Signup submit
+  // Signup handler
   if (signupForm) {
     signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -137,21 +155,21 @@ function setupAuthHandlers() {
       }
 
       try {
-        const { data, error } = await supabase.auth.signUp({
+        const response = await supabaseAuth('/signup', 'POST', {
           email,
           password,
         });
 
-        if (error) throw error;
         alert('Signup successful! Check your email to confirm.');
         signupForm.reset();
-        // Switch back to login
+
+        // Switch to login
         if (loginForm) loginForm.style.display = 'flex';
         if (signupForm) signupForm.style.display = 'none';
         document.getElementById('loginToggle').classList.add('active');
         document.getElementById('signupToggle').classList.remove('active');
       } catch (error) {
-        alert('Signup error: ' + error.message);
+        alert('Signup failed: ' + error.message);
       }
     });
   }
@@ -165,14 +183,12 @@ function setupDashboardHandlers() {
   const accountTab = document.getElementById('accountTab');
 
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await supabase.auth.signOut();
-        currentUser = null;
-        showAuthForm();
-      } catch (err) {
-        alert('Logout error: ' + err.message);
-      }
+    logoutBtn.addEventListener('click', () => {
+      currentUser = null;
+      sessionToken = null;
+      localStorage.removeItem('supabase_token');
+      localStorage.removeItem('supabase_user');
+      showAuthForm();
     });
   }
 
@@ -180,14 +196,14 @@ function setupDashboardHandlers() {
   if (ordersTab) ordersTab.addEventListener('click', () => showTab('orders'));
   if (accountTab) accountTab.addEventListener('click', () => showTab('account'));
 
-  // Setup account handlers
+  // Account handlers
   const updateProfileBtn = document.getElementById('updateProfileBtn');
   const changePasswordBtn = document.getElementById('changePasswordBtn');
   const deleteAccountBtn = document.getElementById('deleteAccountBtn');
 
   if (updateProfileBtn) {
     updateProfileBtn.addEventListener('click', () => {
-      alert('Profile update: feature coming soon');
+      alert('Profile update: coming soon');
     });
   }
 
@@ -207,28 +223,25 @@ function setupDashboardHandlers() {
       }
 
       try {
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        if (error) throw error;
+        await supabaseAuth('/user', 'PUT', { password: newPassword });
         alert('Password updated!');
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmNewPassword').value = '';
       } catch (err) {
-        alert('Password change error: ' + err.message);
+        alert('Error: ' + err.message);
       }
     });
   }
 
   if (deleteAccountBtn) {
-    deleteAccountBtn.addEventListener('click', async () => {
-      if (confirm('Really delete your account? This cannot be undone.')) {
-        try {
-          await supabase.auth.signOut();
-          alert('Account deletion requested. Check your email.');
-          currentUser = null;
-          showAuthForm();
-        } catch (err) {
-          alert('Deletion error: ' + err.message);
-        }
+    deleteAccountBtn.addEventListener('click', () => {
+      if (confirm('Delete account? Cannot be undone.')) {
+        currentUser = null;
+        sessionToken = null;
+        localStorage.removeItem('supabase_token');
+        localStorage.removeItem('supabase_user');
+        alert('Account deletion requested. Check your email.');
+        showAuthForm();
       }
     });
   }
@@ -238,7 +251,7 @@ function setupDashboardHandlers() {
 function showAuthForm() {
   const authContainer = document.getElementById('authContainer');
   const dashboardContainer = document.getElementById('dashboardContainer');
-  
+
   if (authContainer) authContainer.style.display = 'flex';
   if (dashboardContainer) dashboardContainer.style.display = 'none';
 }
@@ -246,11 +259,10 @@ function showAuthForm() {
 function showDashboard() {
   const authContainer = document.getElementById('authContainer');
   const dashboardContainer = document.getElementById('dashboardContainer');
-  
+
   if (authContainer) authContainer.style.display = 'none';
   if (dashboardContainer) dashboardContainer.style.display = 'block';
 
-  // Populate dashboard
   if (currentUser) {
     const userEmail = document.getElementById('userEmail');
     const profileEmail = document.getElementById('profileEmail');
@@ -263,27 +275,22 @@ function showDashboard() {
 
 // Tab System
 function showTab(tabName) {
-  // Hide all tabs
   document.querySelectorAll('.tab-content').forEach((tab) => {
     tab.classList.remove('active');
   });
 
-  // Deactivate all buttons
   document.getElementById('overviewTab')?.classList.remove('active');
   document.getElementById('ordersTab')?.classList.remove('active');
   document.getElementById('accountTab')?.classList.remove('active');
 
-  // Show selected tab
   const tabContent = document.getElementById(`${tabName}Content`);
   if (tabContent) tabContent.classList.add('active');
 
   const tabBtn = document.getElementById(`${tabName}Tab`);
   if (tabBtn) tabBtn.classList.add('active');
 
-  // Load content
   if (tabName === 'overview') loadOverviewTab();
   if (tabName === 'orders') loadOrdersTab();
-  if (tabName === 'account') loadAccountTab();
 }
 
 // Load Overview Tab
@@ -360,9 +367,4 @@ function loadOrdersTab() {
   `
     )
     .join('');
-}
-
-// Load Account Tab
-function loadAccountTab() {
-  // Just setup event listeners (done in setupDashboardHandlers)
 }
