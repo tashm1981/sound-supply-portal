@@ -202,9 +202,16 @@ function showConfirmationReceipt(email) {
   sessionStorage.setItem('signup_email', email);
 
   if (receipt) {
+    receipt.style.display = 'flex';
     receipt.classList.add('show');
 
-    doneBtn.onclick = () => {
+    // Remove old click handlers
+    const newDoneBtn = doneBtn.cloneNode(true);
+    doneBtn.parentNode.replaceChild(newDoneBtn, doneBtn);
+
+    // Add new click handler
+    newDoneBtn.addEventListener('click', () => {
+      receipt.style.display = 'none';
       receipt.classList.remove('show');
       const loginForm = document.getElementById('loginForm');
       const signupForm = document.getElementById('signupForm');
@@ -212,9 +219,13 @@ function showConfirmationReceipt(email) {
       if (signupForm) signupForm.style.display = 'none';
       document.getElementById('authToggle').style.display = 'block';
       document.getElementById('signupToggle').style.display = 'none';
-    };
+    });
 
-    resendBtn?.addEventListener('click', (e) => {
+    // Resend button
+    const newResendBtn = resendBtn.cloneNode(true);
+    resendBtn.parentNode.replaceChild(newResendBtn, resendBtn);
+
+    newResendBtn.addEventListener('click', (e) => {
       e.preventDefault();
       showResendEmailModal(email);
     });
@@ -232,21 +243,30 @@ function showResendEmailModal(defaultEmail) {
 
   if (modal) modal.style.display = 'flex';
 
-  form?.addEventListener('submit', async (e) => {
+  // Remove old form handler
+  const newForm = form.cloneNode(true);
+  form.parentNode.replaceChild(newForm, form);
+
+  // Add new form handler
+  newForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = input.value;
+    const email = newForm.querySelector('#resendEmailInput').value;
 
     try {
       await supabaseAuth('/resend', 'POST', { email, type: 'signup' });
       alert('Confirmation email resent! Check your inbox.');
-      if (modal) modal.style.display = 'none';
+      modal.style.display = 'none';
     } catch (error) {
       alert('Error: ' + error.message);
     }
   });
 
-  closeBtn?.addEventListener('click', () => {
-    if (modal) modal.style.display = 'none';
+  // Close button
+  const newCloseBtn = closeBtn.cloneNode(true);
+  closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+  newCloseBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
   });
 }
 
